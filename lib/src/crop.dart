@@ -15,6 +15,7 @@ enum _CropHandleSide { none, topLeft, topRight, bottomLeft, bottomRight }
 
 class Crop extends StatefulWidget {
   final ImageProvider image;
+  final double? minimumScale;
   final double? aspectRatio;
   final double maximumScale;
   final bool alwaysShowGrid;
@@ -23,6 +24,7 @@ class Crop extends StatefulWidget {
   const Crop({
     Key? key,
     required this.image,
+    this.minimumScale,
     this.aspectRatio,
     this.maximumScale = 2.0,
     this.alwaysShowGrid = false,
@@ -433,7 +435,7 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
       return;
     }
 
-    final targetScale = _scale.clamp(minimumScale, _maximumScale);
+    final targetScale = _scale.clamp(widget.minimumScale ?? minimumScale, _maximumScale);
     _scaleTween = Tween<double>(
       begin: _scale,
       end: targetScale,
