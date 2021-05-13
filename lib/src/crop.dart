@@ -31,27 +31,32 @@ class Crop extends StatefulWidget {
     this.onImageError,
   }) : super(key: key);
 
-  Crop.file(
-    File file, {
+  Crop.file(File file, {
     Key? key,
     double scale = 1.0,
+    double minimumScale,
     this.aspectRatio,
     this.maximumScale = 2.0,
     this.alwaysShowGrid = false,
     this.onImageError,
-  })  : image = FileImage(file, scale: scale),
+  })
+      : this.minimumScale = minimumScale,
+        image = FileImage(file, scale: scale),
         super(key: key);
 
-  Crop.asset(
-    String assetName, {
+  Crop.asset(String assetName, {
     Key? key,
     AssetBundle? bundle,
     String? package,
+    double minimumScale,
     this.aspectRatio,
+    this.minimumScale,
     this.maximumScale = 2.0,
     this.alwaysShowGrid = false,
     this.onImageError,
-  })  : image = AssetImage(assetName, bundle: bundle, package: package),
+  })
+      : this.minimumScale = minimumScale,
+        image = AssetImage(assetName, bundle: bundle, package: package),
         super(key: key);
 
   @override
@@ -86,14 +91,15 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
 
   double get scale => _area.shortestSide / _scale;
 
-  Rect? get area => _view.isEmpty
-      ? null
-      : Rect.fromLTWH(
-          _area.left * _view.width / _scale - _view.left,
-          _area.top * _view.height / _scale - _view.top,
-          _area.width * _view.width / _scale,
-          _area.height * _view.height / _scale,
-        );
+  Rect? get area =>
+      _view.isEmpty
+          ? null
+          : Rect.fromLTWH(
+        _area.left * _view.width / _scale - _view.left,
+        _area.top * _view.height / _scale - _view.top,
+        _area.width * _view.width / _scale,
+        _area.height * _view.height / _scale,
+      );
 
   bool get _isEnabled => _view.isEmpty == false && _image != null;
 
@@ -110,7 +116,8 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
     _activeController = AnimationController(
       vsync: this,
       value: widget.alwaysShowGrid ? 1.0 : 0.0,
-    )..addListener(() => setState(() {}));
+    )
+      ..addListener(() => setState(() {}));
     _settleController = AnimationController(vsync: this)
       ..addListener(_settleAnimationChanged);
   }
@@ -160,7 +167,7 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
   void _getImage({bool force = false}) {
     final oldImageStream = _imageStream;
     final newImageStream =
-        widget.image.resolve(createLocalImageConfiguration(context));
+    widget.image.resolve(createLocalImageConfiguration(context));
     _imageStream = newImageStream;
     if (newImageStream.key != oldImageStream?.key || force) {
       final oldImageListener = _imageListener;
@@ -168,14 +175,15 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
         oldImageStream?.removeListener(oldImageListener);
       }
       final newImageListener =
-          ImageStreamListener(_updateImage, onError: widget.onImageError);
+      ImageStreamListener(_updateImage, onError: widget.onImageError);
       _imageListener = newImageListener;
       newImageStream.addListener(newImageListener);
     }
   }
 
   @override
-  Widget build(BuildContext context) => ConstrainedBox(
+  Widget build(BuildContext context) =>
+      ConstrainedBox(
         constraints: const BoxConstraints.expand(),
         child: Listener(
           onPointerDown: (event) => pointers++,
@@ -435,7 +443,8 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
       return;
     }
 
-    final targetScale = _scale.clamp(widget.minimumScale ?? minimumScale, _maximumScale);
+    final targetScale = _scale.clamp(
+        widget.minimumScale ?? minimumScale, _maximumScale);
     _scaleTween = Tween<double>(
       begin: _scale,
       end: targetScale,
@@ -658,7 +667,8 @@ class _CropPainter extends CustomPainter {
     canvas.save();
     canvas.translate(rect.left, rect.top);
 
-    final paint = Paint()..isAntiAlias = false;
+    final paint = Paint()
+      ..isAntiAlias = false;
 
     final image = this.image;
     if (image != null) {
@@ -769,10 +779,10 @@ class _CropPainter extends CustomPainter {
 
     final path = Path()
       ..moveTo(boundaries.left, boundaries.top)
-      ..lineTo(boundaries.right, boundaries.top)
-      ..lineTo(boundaries.right, boundaries.bottom)
-      ..lineTo(boundaries.left, boundaries.bottom)
-      ..lineTo(boundaries.left, boundaries.top);
+      ..lineTo(boundaries.right, boundaries.top)..lineTo(
+          boundaries.right, boundaries.bottom)..lineTo(
+          boundaries.left, boundaries.bottom)..lineTo(
+          boundaries.left, boundaries.top);
 
     for (var column = 1; column < _kCropGridColumnCount; column++) {
       path
