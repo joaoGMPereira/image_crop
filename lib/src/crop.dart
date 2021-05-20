@@ -16,6 +16,7 @@ enum _CropHandleSide { none, topLeft, topRight, bottomLeft, bottomRight }
 class Crop extends StatefulWidget {
   final ImageProvider image;
   final double? minimumScale;
+  final bool startCollapsed;
   final double? aspectRatio;
   final double maximumScale;
   final bool alwaysShowGrid;
@@ -25,6 +26,7 @@ class Crop extends StatefulWidget {
     Key? key,
     required this.image,
     this.minimumScale,
+    this.startCollapsed = false,
     this.aspectRatio,
     this.maximumScale = 2.0,
     this.alwaysShowGrid = false,
@@ -34,7 +36,8 @@ class Crop extends StatefulWidget {
   Crop.file(File file, {
     Key? key,
     double scale = 1.0,
-    double minimumScale,
+    double? minimumScale,
+    this.startCollapsed = false,
     this.aspectRatio,
     this.maximumScale = 2.0,
     this.alwaysShowGrid = false,
@@ -48,9 +51,9 @@ class Crop extends StatefulWidget {
     Key? key,
     AssetBundle? bundle,
     String? package,
-    double minimumScale,
+    double? minimumScale,
+    this.startCollapsed = false,
     this.aspectRatio,
-    this.minimumScale,
     this.maximumScale = 2.0,
     this.alwaysShowGrid = false,
     this.onImageError,
@@ -335,10 +338,34 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
           viewWidth,
           viewHeight,
         );
+        _setStartCollapsed();
       });
     });
 
     WidgetsBinding.instance?.ensureVisualUpdate();
+  }
+
+  _setStartCollapsed() {
+    if(widget.startCollapsed && widget.minimumScale != null) {
+      final targetScale = widget.minimumScale ?? 1;
+      _scaleTween = Tween<double>(
+        begin: _scale,
+        end: targetScale,
+      );
+
+      _startView = _view;
+      _viewTween = RectTween(
+        begin: _view,
+        end: _getViewInBoundaries(targetScale),
+      );
+
+      _settleController.value = 0.0;
+      _settleController.animateTo(
+        1.0,
+        curve: Curves.fastOutSlowIn,
+        duration: const Duration(milliseconds: 0),
+      );
+    }
   }
 
   _CropHandleSide _hitCropHandle(Offset? localPoint) {
